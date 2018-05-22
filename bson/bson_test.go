@@ -32,6 +32,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
+	"math/rand"
 	"net/url"
 	"reflect"
 	"strings"
@@ -1171,8 +1173,8 @@ type inlineBadKeyMap struct {
 	M map[int]int `bson:",inline"`
 }
 type inlineUnexported struct {
-	M map[string]interface{} `bson:",inline"`
-	unexported               `bson:",inline"`
+	M          map[string]interface{} `bson:",inline"`
+	unexported `bson:",inline"`
 }
 type unexported struct {
 	A int
@@ -1229,11 +1231,11 @@ func (s ifaceSlice) GetBSON() (interface{}, error) {
 
 type (
 	MyString string
-	MyBytes []byte
-	MyBool bool
-	MyD []bson.DocElem
-	MyRawD []bson.RawDocElem
-	MyM map[string]interface{}
+	MyBytes  []byte
+	MyBool   bool
+	MyD      []bson.DocElem
+	MyRawD   []bson.RawDocElem
+	MyM      map[string]interface{}
 )
 
 var (
@@ -1886,5 +1888,51 @@ func (s *S) BenchmarkUnmarshalRaw(c *C) {
 func (s *S) BenchmarkNewObjectId(c *C) {
 	for i := 0; i < c.N; i++ {
 		bson.NewObjectId()
+	}
+}
+
+func (s *S) TestMongoTimestampTime(c *C) {
+	t := time.Now()
+	ts, err := bson.NewMongoTimestamp(t, 123)
+	c.Assert(err, IsNil)
+	c.Assert(ts.Time().Unix(), Equals, t.Unix())
+}
+
+func (s *S) TestMongoTimestampCounter(c *C) {
+	rnd := rand.Uint32()
+	ts, err := bson.NewMongoTimestamp(time.Now(), rnd)
+	c.Assert(err, IsNil)
+	c.Assert(ts.Counter(), Equals, rnd)
+}
+
+func (s *S) TestMongoTimestampError(c *C) {
+	t := time.Date(1969, time.December, 31, 23, 59, 59, 999, time.UTC)
+	ts, err := bson.NewMongoTimestamp(t, 321)
+	c.Assert(int64(ts), Equals, int64(-1))
+	c.Assert(err, ErrorMatches, "invalid value for time")
+}
+
+func ExampleNewMongoTimestamp() {
+
+	var counter uint32 = 1
+	var t time.Time
+
+	for i := 1; i <= 3; i++ {
+
+		if c := time.Now(); t.Unix() == c.Unix() {
+			counter++
+		} else {
+			t = c
+			counter = 1
+		}
+
+		ts, err := bson.NewMongoTimestamp(t, counter)
+		if err != nil {
+			fmt.Printf("NewMongoTimestamp error: %v", err)
+		} else {
+			fmt.Printf("NewMongoTimestamp encoded timestamp: %d\n", ts)
+		}
+
+		time.Sleep(500 * time.Millisecond)
 	}
 }
