@@ -44,7 +44,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/globalsign/mgo/bson"
+	"github.com/gedge/mgo/bson"
 )
 
 // Mode read preference mode. See Eventual, Monotonic and Strong for details
@@ -2764,7 +2764,6 @@ func (p *Pipe) SetMaxTime(d time.Duration) *Pipe {
 	p.maxTimeMS = int64(d / time.Millisecond)
 	return p
 }
-
 
 // Collation allows to specify language-specific rules for string comparison,
 // such as rules for lettercase and accent marks.

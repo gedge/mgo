@@ -29,8 +29,8 @@ package mgo_test
 import (
 	"time"
 
+	"github.com/gedge/mgo"
 	. "gopkg.in/check.v1"
-	"github.com/globalsign/mgo"
 )
 
 func (s *S) TestServerRecoversFromAbend(c *C) {
